@@ -1,5 +1,6 @@
 // ignore_for_file: file_names, prefer_const_constructors
 
+import 'package:flutter/rendering.dart';
 import 'package:ngo_site/confirmdonation.dart';
 import 'package:ngo_site/volunteer_reg.dart';
 
@@ -84,25 +85,17 @@ class Ngo_HomeState extends State<Ngo_Home> {
               mainAxisSpacing: 4.0,
               shrinkWrap: true,
               children: <Widget>[
-                buildCard(
-                    'assets/pic.jpg', 1, 'Donation Request', DonationRequest()),
-                buildCard(
-                    'assets/1.jpeg',
-                    2,
-                    'Ask For Donation',
-                    AlertPopup(
-                        'Ask Donation',
-                        'Ask Donation',
-                        'Press "Ask" for Ask donations from nearby donors',
-                        'Cancel',
-                        'Ask')),
-                buildCard('assets/ngo1.jpg', 3, 'WareHouse Storage',
+                buildCard('assets/request.png', 1, 'Donation Request',
+                    DonationRequest()),
+                buildCard('assets/ask.png', 2, 'Ask For Donation',
+                    AlertPopup(widget.ngo_Id)),
+                buildCard('assets/storage.png', 3, 'WareHouse Storage',
                     WarehouseStorage(widget.storage)),
-                buildCard('assets/ngo.jpg', 4, 'Donation Records',
+                buildCard('assets/records.png', 4, 'Donation Records',
                     DonartionHistory(widget.ngo_Id)),
-                buildCard('assets/ngo.jpg', 4, 'Register Volunteer',
+                buildCard('assets/reg.png', 5, 'Register Volunteer',
                     Volunteer_Registration()),
-                buildCard('assets/ngo.jpg', 5, 'Accept Donation',
+                buildCard('assets/accept.jpg', 6, 'Accept Donation',
                     AcceptDonation(widget.ngo_Id)),
               ],
             ),
@@ -130,20 +123,10 @@ class Ngo_HomeState extends State<Ngo_Home> {
                       color: Colors.blue[800],
                       image: DecorationImage(
                         fit: BoxFit.cover,
-                        image: AssetImage(images), //NetworkImage(
-                        //'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ16dmjgu3tnmRuZPvwh7ZiUMNRNV90ysUpTA&usqp=CAU')
+                        image: AssetImage(images),
                       )),
                 ),
               ]),
-              // Text(
-              //   address,
-              //   style: TextStyle(
-              //       fontFamily: 'Quicksand',
-              //       fontWeight: FontWeight.bold,
-              //       fontSize: 12.0,
-              //       color: Colors.grey),
-              // ),
-              // SizedBox(height: 20.0),
               Expanded(
                   child: Container(
                       width: MediaQuery.of(context).size.width,

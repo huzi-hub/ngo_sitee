@@ -11,7 +11,6 @@ import 'models/ngoDonations.dart';
 class AcceptDonation extends StatefulWidget {
   final ngoId;
   AcceptDonation(this.ngoId);
-  //DonartionHistory(this.donations);
   @override
   _AcceptDonationState createState() => _AcceptDonationState();
 }
@@ -21,18 +20,18 @@ final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 class _AcceptDonationState extends State<AcceptDonation> {
   String? _mySelection;
 
-  List data = []; //edited line
+  List volunteers = [];
 
   Future<String> getSWData() async {
     String url = 'https://edonations.000webhostapp.com/drop-down.php';
-
-    var res =
-        await http.get(Uri.parse(url), headers: {'Accept': "application/json"});
+    var data = {'ngo_id': widget.ngoId};
+    var res = await http.post(Uri.parse(url),
+        body: jsonEncode(data), headers: {'Accept': "application/json"});
 
     var resBody = json.decode(res.body);
 
     setState(() {
-      data = resBody;
+      volunteers = resBody;
     });
 
     print(resBody);
@@ -68,7 +67,7 @@ class _AcceptDonationState extends State<AcceptDonation> {
             ),
           ),
           Container(
-            height: MediaQuery.of(context).size.height * 0.7,
+            height: MediaQuery.of(context).size.height * 0.79,
             margin: const EdgeInsets.only(top: 10),
             child: FutureBuilder<List<NgoDonations>>(
               future: fetchDonations(http.Client()),
@@ -114,6 +113,9 @@ class _AcceptDonationState extends State<AcceptDonation> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
+                                Container(
+                                  child: volunteerList(),
+                                ),
                                 ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                         primary: Colors.red),
@@ -124,36 +126,18 @@ class _AcceptDonationState extends State<AcceptDonation> {
                                     },
                                     child: Row(
                                       children: [
-                                        Container(
-                                          child: new DropdownButton<String>(
-                                            items: data.map((item) {
-                                              return new DropdownMenuItem(
-                                                child: new Text(
-                                                  item['username'],
-                                                ),
-                                                value: item['id'].toString(),
-                                              );
-                                            }).toList(),
-                                            onChanged: (val) {
-                                              setState(() {
-                                                _mySelection = val.toString();
-                                              });
-                                            },
-                                            value: _mySelection,
-                                          ),
-                                        ),
-                                        // Icon(Icons.cancel_outlined),
-                                        // SizedBox(
-                                        //     width: MediaQuery.of(context)
-                                        //             .size
-                                        //             .width *
-                                        //         0.01),
-                                        // Text(
-                                        //   'Reject',
-                                        //   style: TextStyle(
-                                        //       fontFamily: 'Quicksand',
-                                        //       fontSize: 16),
-                                        // )
+                                        Icon(Icons.done_outlined),
+                                        SizedBox(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.01),
+                                        Text(
+                                          'Reject',
+                                          style: TextStyle(
+                                              fontFamily: 'Quicksand',
+                                              fontSize: 16),
+                                        )
                                       ],
                                     )),
                                 SizedBox(
@@ -164,9 +148,19 @@ class _AcceptDonationState extends State<AcceptDonation> {
                                     style: ElevatedButton.styleFrom(
                                         primary: Colors.green),
                                     onPressed: () {
-                                      accpetDonation(int.parse(
-                                          snapshot.data![index].donation_id));
-                                      setState(() {});
+                                      if (_mySelection != 'volunteer') {
+                                        accpetDonation(
+                                            int.parse(snapshot
+                                                .data![index].donation_id),
+                                            int.parse(snapshot
+                                                .data![index].quantity));
+                                        setState(() {});
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                                content: Text(
+                                                    'Please Assign Volunteer')));
+                                      }
                                     },
                                     child: Row(
                                       children: [
@@ -205,6 +199,28 @@ class _AcceptDonationState extends State<AcceptDonation> {
     );
   }
 
+  int? vol_id;
+  Widget volunteerList() {
+    return DropdownButton<String>(
+      hint: Text('Select volunteer'),
+      items: volunteers.map((item) {
+        vol_id = int.parse(item['volunteer_id']);
+        return new DropdownMenuItem(
+          child: new Text(
+            item['volunteername'],
+          ),
+          value: item['volunteer_id'].toString(),
+        );
+      }).toList(),
+      onChanged: (val) {
+        setState(() {
+          _mySelection = val.toString();
+        });
+      },
+      value: _mySelection,
+    );
+  }
+
   Future<List<NgoDonations>> fetchDonations(http.Client client) async {
     const String url =
         'https://edonations.000webhostapp.com/api-pendingdonations.php';
@@ -222,17 +238,28 @@ class _AcceptDonationState extends State<AcceptDonation> {
     }
   }
 
-  Future accpetDonation(final donationId) async {
+  Future accpetDonation(final donationId, int quantity) async {
     String url = 'https://edonations.000webhostapp.com/api-acceptdonation.php';
-    var data = {'donation_id': donationId};
-    var result = await http.post(Uri.parse(url), body: jsonEncode(data));
-    var msg = jsonDecode(result.body);
-    if (result.statusCode == 200) {
-      final snackBar = SnackBar(content: Text('Confirmed'));
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    var data = {
+      'donation_id': donationId,
+      'volunteer_id': vol_id,
+      'quantity': quantity,
+      'ngo_id': widget.ngoId
+    };
+
+    if (_mySelection != null) {
+      var result = await http.post(Uri.parse(url), body: jsonEncode(data));
+      var msg = jsonDecode(result.body);
+      if (result.statusCode == 200) {
+        final snackBar = SnackBar(content: Text('Confirmed'));
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Not Confirmed')));
+      }
     } else {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Not Confirmed')));
+          .showSnackBar(SnackBar(content: Text('please Assign Volunteer')));
     }
   }
 
